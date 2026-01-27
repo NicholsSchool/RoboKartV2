@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <WiFi.h>
-#include <WiFiUdp.h>
 #include <zenoh-pico.h>
 
 #define SSID "RoboKart"
@@ -32,14 +31,24 @@ void setup() {
         delay(1000);
     }
     Serial.println("OK");
-  
+
+    //Printing Network Info
+    Serial.println("Network Info:");
+    Serial.print("| IP Address: ");
+    Serial.println(WiFi.localIP());
+    Serial.print("| Subnet Mask: ");
+    Serial.println(WiFi.subnetMask());
+    Serial.print("| Gateway: ");
+    Serial.println(WiFi.gatewayIP());
+
+    delay(2000);
+
     // Configuration
     z_owned_config_t config;
-    z_config_default(&config); //-87
-    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
-    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MULTICAST_SCOUTING_KEY, "true");
-    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MULTICAST_LOCATOR_KEY, "224.0.0.225:7446");
-    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_SCOUTING_TIMEOUT_KEY, "100000");
+    z_config_default(&config);
+    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, "peer");
+    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MULTICAST_LOCATOR_KEY, "udp/224.0.0.225:7446");
+    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_LISTEN_KEY, "udp/224.0.0.225:7446#iface=en0");
 
     delay(500);
 
