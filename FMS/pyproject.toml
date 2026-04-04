@@ -7,5 +7,6 @@ requires-python = ">=3.13"
 dependencies = [
     "eclipse-zenoh>=1.7.2",
     "nicegui>=3.5.0",
+    "paho-mqtt>=2.1.0",
     "unique-namer>=1.6.2",
 ]

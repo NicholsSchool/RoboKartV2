@@ -1,10 +1,11 @@
 import json
+import paho.mqtt.client as mqtt
 import sys
 from nicegui import app, ui
 import UIUtil
 import logging
 from zenoh import Sample
-import ZenohSessionManager
+import MQTTSessionManager
 
 UIUtil.injectCSS()
 LOG_TAG = "FMS UI"
@@ -22,9 +23,8 @@ with ui.header(elevated=True).classes('items-center justify-between bg-neutral-8
             async def shutdown():
                 UIUtil.log(logging.INFO, LOG_TAG, "Received shutdown command from client, shutting down...")
                 await ui.run_javascript('window.close()').wait_for_result()
-                ZenohSessionManager.close()
+                MQTTSessionManager.close()
                 app.shutdown()
-                sys.exit(0)
             
             ui.button("Logs", on_click=dialog.open).props('outline square')
             ui.button("Shutdown FMS", on_click=shutdown, color='negative').props('outline square')
@@ -43,12 +43,12 @@ with ui.grid(columns=2).classes("w-full *:flex *:grow"):
             connTable.rows = []
             connTable.row_key = 'id'
 
-            def updateTable(updateRows):
+            def updateTable(client, userdata, msg):
                 
                 tableRows = []
                 
-                for row in updateRows:
-                    heartbeatInfo = json.loads(row['heartbeatInfo'])
+                for row in MQTTSessionManager.sessionPeers:
+                    heartbeatInfo = row['heartbeatInfo']
                     tableRows.append({
                         'type': row['type'],
                         'id': row['id'],
@@ -57,7 +57,8 @@ with ui.grid(columns=2).classes("w-full *:flex *:grow"):
 
                 connTable.rows = tableRows
 
-            ZenohSessionManager.registerSessionPeerUpdateCallback("Connections Table", updateTable)
+            # ZenohSessionManager.registerSessionPeerUpdateCallback("Connections Table", updateTable)
+            MQTTSessionManager.subscriptions["HEARTBEAT"].addCallback("Connections Table", updateTable)
             
     with ui.card():
         ui.label("Controller Inputs")
@@ -72,10 +73,10 @@ with ui.grid(columns=2).classes("w-full *:flex *:grow"):
             inpTable.rows = []
             inpTable.row_key = 'id'
 
-            def updateTableWithInput(sample: Sample):
+            def updateTableWithInput(client, userdata, msg: mqtt.MQTTMessage):
                 for row in inpTable.rows:
-                    if row["id"] == str(sample.key_expr).split("/")[1]:
-                        sampleData = json.loads(str(sample.payload))
+                    if row["id"] == str(msg.topic).split("/")[1]:
+                        sampleData = json.loads(str(msg.payload))
                         row.update({
                             'id': row["id"],
                             'turn': sampleData["turn"],
@@ -84,7 +85,10 @@ with ui.grid(columns=2).classes("w-full *:flex *:grow"):
                             'backward': sampleData["backward"],
                         })
 
-            def updateTableWithPeerUpdate(sessionPeers):
+            def updateTableWithPeerUpdate(client, userdata, msg):
+                
+                sessionPeers = MQTTSessionManager.sessionPeers
+                
                 peerIDList = [peer["id"] for peer in sessionPeers if peer["type"] == "Controller"]
                 tableIDList = [row["id"] for row in inpTable.rows]
                 
@@ -101,10 +105,12 @@ with ui.grid(columns=2).classes("w-full *:flex *:grow"):
                     if (peerIDList.count(tableIDList[i]) < 1):
                         inpTable.rows.pop(i)
 
-            ZenohSessionManager.registerControllerUpdateCallback("Inputs Table", updateTableWithInput)
-            ZenohSessionManager.registerSessionPeerUpdateCallback("Inputs Table", updateTableWithPeerUpdate)
+            # ZenohSessionManager.registerControllerUpdateCallback("Inputs Table", updateTableWithInput)
+            # ZenohSessionManager.registerSessionPeerUpdateCallback("Inputs Table", updateTableWithPeerUpdate)
+            MQTTSessionManager.subscriptions["CONTROLLER_INPUT"].addCallback("Inputs Table", updateTableWithInput)
+            MQTTSessionManager.subscriptions["HEARTBEAT"].addCallback("Inputs Table", updateTableWithPeerUpdate)
 
-ZenohSessionManager.initializeZenohSession()
+MQTTSessionManager.init()
 UIUtil.log(logging.INFO, LOG_TAG, "FMS Initialization Finished.")
 ui.dark_mode().enable()
 ui.run(reload=False)

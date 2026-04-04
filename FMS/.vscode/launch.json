@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "name": "Debug FMS",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/FMS.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}
