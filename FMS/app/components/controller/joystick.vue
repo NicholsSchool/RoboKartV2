@@ -1,9 +1,9 @@
 <template>
     
-    <div ref="joystick-container" class="relative bg-secondary ring-2 ring-primary overflow-hidden">
+    <div ref="joystick-container" class="relative bg-muted ring-2 ring-primary overflow-hidden">
         <div v-if="mousePressed" class="touchDownPos bg-white/50 rounded-full pointer-events-none"></div>
         <div v-if="mousePressed" class="touchPos bg-white/20 rounded-full pointer-events-none"></div>
-        <div v-if="mousePressed" class="stickArea bg-white/10 rounded-sm pointer-events-none"></div>
+        <div v-if="mousePressed" class="stickArea bg-white/10 pointer-events-none"></div>
     </div>
     
 </template>
