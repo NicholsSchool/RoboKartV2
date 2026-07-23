@@ -5,5 +5,13 @@ export default defineAppConfig({
             secondary: 'pink',
             neutral: 'taupe'
         },
+        button: {
+            defaultVariants: {
+                variant: "outline"
+            },
+            slots: {
+                base: "justify-center"
+            }
+        }
     }
 })

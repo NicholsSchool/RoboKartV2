@@ -10,3 +10,10 @@
 body {
   font-family: 'JetBrains Mono', monospace;
 }
+
+.text-rainbow {
+  background: linear-gradient(in oklch 90deg, var(--ui-primary), yellow,var(--ui-secondary));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}

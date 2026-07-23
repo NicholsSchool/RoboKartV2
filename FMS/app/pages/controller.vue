@@ -8,6 +8,7 @@
                     <p> X: {{ joystickInput.x }} </p>
                     <p> Y: {{ joystickInput.y }} </p>
                     <UButton>Fullscreen</UButton>
+                    <p>{{ name }}</p>
                 </div>
             </div>
         </div>
@@ -15,7 +16,20 @@
 </template>
 
 <script setup>
+import { generateControllerName } from '#imports';
 
 const joystickInput = ref({"x": 0.0, "y": 0.0})
+
+const name = generateControllerName()
+
+/** 
+ * TODO:
+ * - Connect to MQTT Broker
+ * - Display connection status
+ * - Send joystick data to broker using name
+ * - Send heartbeat to broker every 500ms
+ * - Add gas/brake/steering mode instead of joystick (allow swap between them)
+ * - Recieve some data from the broker (potentially color sensor)
+*/
 
 </script>
