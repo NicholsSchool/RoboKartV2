@@ -17,3 +17,25 @@ body {
   -webkit-background-clip: text;
   color: transparent;
 }
+
+.bg-chevron-left {
+
+  background:
+    linear-gradient(45deg, var(--ui-bg-elevated) 25%, transparent 25%),
+    linear-gradient(135deg, var(--ui-bg-elevated) 25%, transparent 25%),
+    linear-gradient(45deg, var(--ui-bg-accented) 50%, transparent 50%),
+    linear-gradient(135deg, var(--ui-bg-accented) 50%, var(--ui-bg-elevated) 50%);
+
+  background-size: 48px 48px;
+}
+
+.bg-chevron-right {
+
+  background:
+    linear-gradient(315deg, var(--ui-bg-elevated) 25%, transparent 25%),
+    linear-gradient(225deg, var(--ui-bg-elevated) 25%, transparent 25%),
+    linear-gradient(315deg, var(--ui-bg-accented) 50%, transparent 50%),
+    linear-gradient(225deg, var(--ui-bg-accented) 50%, var(--ui-bg-elevated) 50%);
+
+  background-size: 48px 48px;
+}

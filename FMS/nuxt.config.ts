@@ -14,6 +14,9 @@ export default defineNuxtConfig({
         '@vue/devtools-kit',
         '@vueuse/core'
       ]
+    },
+    server: {
+      allowedHosts: ["tantalus.dyn.wpi.edu"]
     }
   },
   ssr: false,
