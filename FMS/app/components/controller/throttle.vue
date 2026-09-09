@@ -1,36 +1,31 @@
 <template>
-    <div class="flex flex-col w-full h-full gap-4">
-        <UButton icon="i-ix-chevron-up" class="w-full grow"/>
-        <UButton icon="i-ix-chevron-down" class="w-full grow"/>
     <div class="flex flex-col w-full h-full gap-4 touch-none select-none">
         <UButton 
             icon="i-ix-chevron-up" 
-            class="w-full grow touch-none select-none transition-all active:scale-[0.98]"
-            :color="isForwardPressed ? 'primary' : 'neutral'"
-            :variant="isForwardPressed ? 'solid' : 'subtle'"
+            class="w-full grow touch-none select-none transition-all"
+            :class="isForwardPressed ? 'scale-[0.95] ring-4' : ''"
+            :variant="isForwardPressed ? 'outline' : 'subtle'"
             :ui="{ leadingIcon: 'size-16 pointer-events-none' }"
-            @pointerdown="handleForwardPointerDown"
-            @pointerup="handleForwardPointerUp"
-            @pointercancel="handleForwardPointerCancel"
-            @lostpointercapture="handleForwardPointerCancel"
+            @pointerdown="forwardPressed"
+            @pointerup="forwardReleased"
+            @pointercancel="forwardReleased"
+            @lostpointercapture="forwardReleased"
         />
         <UButton 
             icon="i-ix-chevron-down" 
-            class="w-full grow touch-none select-none transition-all active:scale-[0.98]"
-            :color="isReversePressed ? 'primary' : 'neutral'"
-            :variant="isReversePressed ? 'solid' : 'subtle'"
+            class="w-full grow touch-none select-none transition-all"
+            :class="isReversePressed ? 'scale-[0.95] ring-4' : ''"
+            :variant="isReversePressed ? 'outline' : 'subtle'"
             :ui="{ leadingIcon: 'size-16 pointer-events-none' }"
-            @pointerdown="handleReversePointerDown"
-            @pointerup="handleReversePointerUp"
-            @pointercancel="handleReversePointerCancel"
-            @lostpointercapture="handleReversePointerCancel"
+            @pointerdown="backwardsPressed"
+            @pointerup="backwardsReleased"
+            @pointercancel="backwardsReleased"
+            @lostpointercapture="backwardsReleased"
         />
     </div>
 </template>
 
 <script setup>
-import { ref, onUnmounted } from 'vue'
-
 const model = defineModel({ default: 0.0 })
 
 const isForwardPressed = ref(false)
@@ -46,7 +41,7 @@ function updateModel() {
     }
 }
 
-function handleForwardPointerDown(event) {
+function forwardPressed(event) {
     event.preventDefault()
     try {
         event.currentTarget?.setPointerCapture?.(event.pointerId)
@@ -55,7 +50,7 @@ function handleForwardPointerDown(event) {
     updateModel()
 }
 
-function handleForwardPointerUp(event) {
+function forwardReleased(event) {
     event.preventDefault()
     try {
         if (event.currentTarget?.hasPointerCapture?.(event.pointerId)) {
@@ -66,17 +61,7 @@ function handleForwardPointerUp(event) {
     updateModel()
 }
 
-function handleForwardPointerCancel(event) {
-    try {
-        if (event.currentTarget?.hasPointerCapture?.(event.pointerId)) {
-            event.currentTarget?.releasePointerCapture?.(event.pointerId)
-        }
-    } catch (e) {}
-    isForwardPressed.value = false
-    updateModel()
-}
-
-function handleReversePointerDown(event) {
+function backwardsPressed(event) {
     event.preventDefault()
     try {
         event.currentTarget?.setPointerCapture?.(event.pointerId)
@@ -85,18 +70,8 @@ function handleReversePointerDown(event) {
     updateModel()
 }
 
-function handleReversePointerUp(event) {
+function backwardsReleased(event) {
     event.preventDefault()
-    try {
-        if (event.currentTarget?.hasPointerCapture?.(event.pointerId)) {
-            event.currentTarget?.releasePointerCapture?.(event.pointerId)
-        }
-    } catch (e) {}
-    isReversePressed.value = false
-    updateModel()
-}
-
-function handleReversePointerCancel(event) {
     try {
         if (event.currentTarget?.hasPointerCapture?.(event.pointerId)) {
             event.currentTarget?.releasePointerCapture?.(event.pointerId)
@@ -107,6 +82,8 @@ function handleReversePointerCancel(event) {
 }
 
 onUnmounted(() => {
+    isForwardPressed.value = false
+    isReversePressed.value = false
     model.value = 0.0
 })
 </script>

@@ -1,5 +1,4 @@
 <template>
-    <div class="flex h-20 min-w-40">
     <div 
         class="flex h-20 min-w-40 touch-none select-none"
         @pointercancel="resetModel"
@@ -22,7 +21,5 @@ function resetModel() {
     model.value = 0.0
 }
 
-onUnmounted(() => {
-    model.value = 0.0
-})
+onUnmounted(resetModel)
 </script>

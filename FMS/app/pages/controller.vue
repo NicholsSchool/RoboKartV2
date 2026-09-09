@@ -1,40 +1,43 @@
 <template>
-    <div ref="controller" class="absolute inset-0 flex flex-col">
     <div ref="controller" class="absolute inset-0 flex flex-col controller-touch-surface select-none touch-none overflow-hidden">
         <div class="flex flex-col gap-4 h-full w-full">
-            <div class="flex items-center justify-between bg-elevated h-12 w-full border-t-4" :class="mqttStatus == mqttStates.CONN ? 'border-success-500' : 'border-error-500'">
-                <HeaderTitle title="RoboKart Controller" class="text-xl" />
+            <div class="flex items-center bg-elevated h-12 w-full border-t-4" :class="mqttStatus == mqttStates.CONN ? 'border-success-500' : 'border-error-500'">
+                <HeaderTitle title="Controller" class="text-xl" />
                 <div class="flex items-center gap-2">
                     <p class="text-xl">{{ name }}</p>
                     <UIcon :name="batteryIcon" class="size-6"/>
                 </div>
-                <div class="flex h-full items-center justify-center text-xl px-8 cut-corners" :class="mqttStatus == mqttStates.CONN ? 'bg-success-800/25' : 'bg-error-800/25'">
-                    <p class="font-extrabold">Status: {{mqttStatus}}</p>
+                <div class="w-full h-0.5 mx-4" :class="mqttStatus == mqttStates.CONN ? 'bg-success-500' : 'bg-error-500'" />
+                <div class="flex h-full w-50 items-center justify-center text-xl px-8 cut-corners" :class="mqttStatus == mqttStates.CONN ? 'bg-success-800/25' : 'bg-error-800/25'">
+                    <p class="font-extrabold">{{ mqttStatus }}</p>
                 </div>
-                <UButton size="xl" variant="ghost" :icon="isFullscreen ? 'i-ix-full-screen-exit' : 'i-ix-full-screen'" v-on:click="toggle"/>
+                <UButton size="xl" variant="soft" class="pl-8 cut-left-corner" :icon="isFullscreen ? 'i-ix-full-screen-exit' : 'i-ix-full-screen'" v-on:click="toggle"/>
             </div>
-            <div v-if="isFullscreen" class="flex *:p-6 items-center justify-between h-full">
             <div v-if="isFullscreen" class="flex *:p-6 items-center justify-between h-full touch-none select-none">
                 <div class="flex flex-col justify-center w-1/2 h-full gap-4">
                     <div class="w-full h-1/2 bg-elevated border-2 border-neutral-100/25" />
                     <ControllerSlider v-model="sliderInput" />
                 </div>
                 <div class="flex w-1/2 h-full">
-                    <ControllerThrottle />
                     <ControllerThrottle v-model="throttleInput" />
+                </div>
+            </div>
+            <div v-if="!isFullscreen" class="flex items-center justify-center h-full">
+                <div class="flex-col p-2 border-t-4 shadow-lg border-error-500 bg-error-800/25 shadow-error-600/35"> 
+                    <p class="font-extrabold">CONTROLS DISABLED</p>
+                    <p class="font-light"> Please press the fullscreen button to enable the controls. </p>
                 </div>
             </div>
         </div>
         <div class="absolute bottom-0 left-0 bg-accented/50 px-4">
-            <p> X: {{ sliderInput }} | Y: {{ 0 }} | {{ mqttStatus }} | {{ batteryState.charging }} </p>
-            <p> X: {{ sliderInput }} | Y: {{ throttleInput }} | {{ mqttStatus }} | {{ batteryState.charging }} </p>
+            <p> X: {{ sliderInput }} | Y: {{ throttleInput }} | {{ mqttStatus }} </p>
         </div>
     </div>
 </template>
 
 <script setup>
 import { generateControllerName } from '#imports';
-import { useBattery, watchDebounced, useScreenOrientation, useFullscreen } from '@vueuse/core'
+import { useBattery, watchDebounced, useScreenOrientation, useFullscreen, useWakeLock } from '@vueuse/core'
 import mqtt from 'mqtt'
 
 const mqttStates = Object.freeze({
@@ -53,6 +56,9 @@ const { lockOrientation } = useScreenOrientation()
 lockOrientation('landscape')
 
 const { isFullscreen, toggle } = useFullscreen()
+
+const { request: lockScreen } = useWakeLock()
+lockScreen()
 
 const name = generateControllerName()
 
@@ -98,23 +104,14 @@ client.on("error", () => { //Connection error
 });
 
 
-// watchDebounced(joystickInput, (newValue, oldValue) => {
-//     if (mqttStatus.value != mqttStates.CONN) return
-//     if (newValue.x != oldValue.x) {
-//         client.publish(`controller/${name}/x`, floatToBuffer(newValue.x))
-//     }
-//     if (newValue.y != oldValue.y) {
-//         client.publish(`controller/${name}/y`, floatToBuffer(newValue.y))
-//     }
-// }, { debounce: 50, maxWait: 50 })
 watchDebounced(sliderInput, (newValue) => {
     if (mqttStatus.value != mqttStates.CONN) return
-    client.publish(`controller/${name}/x`, floatToBuffer(newValue))
+    client.publish(`controller/${name}/x`, floatToBuffer(newValue), {qos: Math.abs(newValue) < 0.1 ? 1 : 0})
 }, { debounce: 20, maxWait: 50 })
 
 watch(throttleInput, (newValue) => {
     if (mqttStatus.value != mqttStates.CONN) return
-    client.publish(`controller/${name}/y`, floatToBuffer(newValue))
+    client.publish(`controller/${name}/y`, floatToBuffer(newValue), {qos: Math.abs(newValue) < 0.1 ? 1 : 0})
 })
 
 setInterval(() => {
@@ -139,8 +136,9 @@ function floatToBuffer(val) {
  * - Display connection status ✅
  * - Send joystick data to broker using name ✅
  * - Send heartbeat to broker every 500ms ✅
- * - Add gas/brake/steering mode instead of joystick (allow swap between them)
+ * - Add gas/brake/steering mode instead of joystick (allow swap between them) ✅
  * - Recieve some data from the broker (potentially color sensor)
+ * - Get app to work with HTTPS on FMS Server (unlocks battery, screen lock, screen orientation APIs)
 */
 
 </script>
@@ -149,6 +147,10 @@ function floatToBuffer(val) {
 
 .cut-corners {
     clip-path: polygon(0% 0%, 16px 100%, 100% 100%, calc(100% - 16px) 0%);
+}
+
+.cut-left-corner {
+    clip-path: polygon(0% 0%, 16px 100%, 100% 100%, 100% 0%);
 }
 
 .controller-touch-surface {
