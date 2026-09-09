@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-import { useResizeObserver, useMouse, useMousePressed } from '@vueuse/core'
+import { usePointer, useResizeObserver, useMouseInElement, useMousePressed } from '@vueuse/core'
 
 const model = defineModel({ default: {
     "x": 0.0,
@@ -18,13 +18,9 @@ const model = defineModel({ default: {
 
 const container = useTemplateRef("joystick-container")
 
-const extractor = (event) => {
-    if (!(event instanceof MouseEvent)) return null
-    return [event.offsetX, event.offsetY]
-}
-
-const { x: mouseX, y: mouseY} = useMouse({ target: container, type: extractor})
+const { elementX: mouseX, elementY: mouseY} = useMouseInElement(container)
 const { pressed: mousePressed } = useMousePressed({target: container})
+const { x: mouseAbsX, y: mouseAbsY } = usePointer({ target: container })
 
 const width = ref(0)
 const height = ref(0)
@@ -42,8 +38,9 @@ const mouseDownY = ref(0)
 
 watch(mousePressed, (p) => {
     if (p) {
-        mouseDownX.value = mouseX.value
-        mouseDownY.value = mouseY.value
+        const rect = container.value.getBoundingClientRect()
+        mouseDownX.value = mouseAbsX.value - rect.left
+        mouseDownY.value = mouseAbsY.value - rect.top
     }
 })
 

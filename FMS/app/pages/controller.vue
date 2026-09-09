@@ -22,7 +22,7 @@
 
 <script setup>
 import { generateControllerName } from '#imports';
-import { useBattery } from '@vueuse/core'
+import { useBattery, watchDebounced } from '@vueuse/core'
 import mqtt from 'mqtt'
 
 const mqttStates = Object.freeze({
@@ -65,15 +65,15 @@ client.on("error", () => { //Connection error
 });
 
 
-watch(joystickInput, (newValue, oldValue) => {
+watchDebounced(joystickInput, (newValue, oldValue) => {
     if (mqttStatus.value != mqttStates.CONN) return
     if (newValue.x != oldValue.x) {
-        client.publish(`controller/${name}/x`, newValue.x.toString())
+        client.publish(`controller/${name}/x`, floatToBuffer(newValue.x))
     }
     if (newValue.y != oldValue.y) {
-        client.publish(`controller/${name}/y`, newValue.y.toString())
+        client.publish(`controller/${name}/y`, floatToBuffer(newValue.y))
     }
-})
+}, { debounce: 50, maxWait: 50 })
 
 setInterval(() => {
     if (mqttStatus.value != mqttStates.CONN) return
@@ -85,6 +85,11 @@ setInterval(() => {
     }))
 }, 500)
 
+function floatToBuffer(val) {
+    const buf = new Int8Array(1)
+    buf[0] = Math.round(127 * Math.max(-1, Math.min(1, val)));
+    return new Uint8Array(buf.buffer);
+}
 
 /** 
  * TODO:
